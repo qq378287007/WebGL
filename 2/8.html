@@ -1,0 +1,107 @@
+<html>
+
+<body>
+    <canvas id="webgl"></canvas>
+
+    <script>
+        var VSHADER_SOURCE = `
+    attribute vec4 a_Position;
+    uniform mat4 u_RotateMatrix;
+    void main() {
+        gl_Position = u_RotateMatrix * a_Position;
+    }`
+
+        var FSHADER_SOURCE = `
+    precision mediump float;
+    uniform vec4 u_FragColor;
+    void main() {
+        gl_FragColor = u_FragColor;
+    }`
+
+        function initShader(gl, VSHADER_SOURCE, FSHADER_SOURCE) {
+            var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+            var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+
+            gl.shaderSource(vertexShader, VSHADER_SOURCE);
+            gl.shaderSource(fragmentShader, FSHADER_SOURCE);
+
+            gl.compileShader(vertexShader);
+            gl.compileShader(fragmentShader);
+
+            var program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            gl.useProgram(program);
+            gl.program = program;
+
+            return program;
+        }
+
+        function setFragColor(gl) {
+            var u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
+            gl.uniform4f(u_FragColor, 0.0, 1.0, 0.0, 1.0) //绿色
+        }
+
+        function initVertexBuffers(gl) {
+            var vertices = new Float32Array([
+                0.0, 0.5,
+                -0.5, -0.5,
+                0.5, -0.5
+            ])
+
+            var vertexBuffer = gl.createBuffer();
+            if (!vertexBuffer) {
+                console.log('创建缓冲区对象失败！')
+                return -1
+            }
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
+
+            var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+            gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0)
+
+            gl.enableVertexAttribArray(a_Position)
+
+            return vertices.length / 2
+        }
+
+        function init() {
+            const canvas = document.getElementById('webgl');
+            const gl = canvas.getContext('webgl');
+            initShader(gl, VSHADER_SOURCE, FSHADER_SOURCE);
+
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            setFragColor(gl)
+
+            var n = initVertexBuffers(gl)
+
+            var u_RotateMatrix = gl.getUniformLocation(gl.program, 'u_RotateMatrix')
+
+            var ANGLE = 60.0
+            var rad = Math.PI * ANGLE / 180.0 //将角度转换为弧度
+            var cosB = Math.cos(rad)
+            var sinB = Math.sin(rad)
+           
+            var translateMatrix = new Float32Array([
+                cosB, sinB, 0.0, 0.0,
+                -sinB, cosB, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0
+            ])
+
+            gl.uniformMatrix4fv(u_RotateMatrix, false, translateMatrix)
+
+            gl.drawArrays(gl.TRIANGLES, 0, n)
+        }
+
+        init()
+    </script>
+</body>
+
+
+</html>

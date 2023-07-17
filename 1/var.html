@@ -1,0 +1,41 @@
+<html>
+
+<head>
+    <script src="initShaders.js"></script>
+</head>
+
+<body>
+    <canvas id="cvs">不支持canvas</canvas>
+    <script>
+        const ctx = document.getElementById('cvs')
+        const gl = ctx.getContext('webgl')
+
+        const VSHADER_SOURCE = `
+        attribute vec4 a_Position;
+        attribute float a_PointSize;
+        void main() {
+            gl_Position = a_Position;
+            gl_PointSize = a_PointSize;                        
+        }`
+
+        const FSHADER_SOURCE = `
+        void main() {
+            gl_FragColor  = vec4(1.0, 0.0, 0.0, 1.0);
+        }`
+
+        const program = initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)
+
+        const a_Position = gl.getAttribLocation(program, 'a_Position');
+        gl.vertexAttrib4f(a_Position, 0.0, 0.0, 0.0, 1.0);
+
+        const a_PointSize = gl.getAttribLocation(program, "a_PointSize");
+        gl.vertexAttrib1f(a_PointSize, 50.0);
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0)
+        gl.clear(gl.COLOR_BUFFER_BIT)
+
+        gl.drawArrays(gl.POINTS, 0, 1);
+    </script>
+</body>
+
+</html>

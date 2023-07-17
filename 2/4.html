@@ -1,0 +1,137 @@
+<html>
+
+<body>
+    <!--canvas标签创建一个宽高均为400像素蓝色背景的画布-->
+    <canvas id="webgl" width="400" height="400" style="background-color: blue"></canvas>
+
+    <script>
+        //通过getElementById()方法获取canvas画布
+        var canvas = document.getElementById('webgl');
+
+        //获取上下文-二维
+        //var gl = canvas.getContext('2d');
+        //获取上下文-三维
+        var gl = canvas.getContext('webgl');
+
+        //顶点着色器
+        var VSHADER_SOURCE = `
+            attribute vec4 a_Position;
+            attribute float a_PointSize;
+            void main() {
+                gl_Position = a_Position;
+                gl_PointSize = a_PointSize;
+            }`
+
+        //片元着色器
+        var FSHADER_SOURCE = `
+            precision mediump float;
+            uniform vec4 u_FragColor;
+            void main() {
+                gl_FragColor = u_FragColor;
+            }`
+
+        //初始化着色器函数
+        function initShader(gl, VSHADER_SOURCE, FSHADER_SOURCE) {
+            //创建顶点着色器对象
+            var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+            //创建片元着色器对象
+            var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+            //引入顶点、片元着色器源代码
+            gl.shaderSource(vertexShader, VSHADER_SOURCE);
+            gl.shaderSource(fragmentShader, FSHADER_SOURCE);
+            //编译顶点、片元着色器
+            gl.compileShader(vertexShader);
+            gl.compileShader(fragmentShader);
+
+            //创建程序对象program
+            var program = gl.createProgram();
+            //附着顶点着色器和片元着色器到program
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            //链接program
+            gl.linkProgram(program);
+            //使用program
+            gl.useProgram(program);
+            //返回程序program对象
+            return program;
+        }
+
+        function init() {
+            //通过getElementById()方法获取canvas画布
+            var canvas = document.getElementById('webgl');
+            //通过方法getContext()获取WebGL上下文
+            var gl = canvas.getContext('webgl');
+            //初始化着色器
+            var program = initShader(gl, VSHADER_SOURCE, FSHADER_SOURCE);
+
+            //获取着色器attribute变量a_Position的存储地址
+            var a_Position = gl.getAttribLocation(program, 'a_Position');
+            //向着色器attribute变量a_Position传值
+            gl.vertexAttrib3f(a_Position, 0.0, 0.0, 0.0)
+
+            //获取着色器attribute变量a_PointSize的存储地址
+            var a_PointSize = gl.getAttribLocation(program, 'a_PointSize');
+            //向顶点着色器attribute变量a_PointSize传值
+            gl.vertexAttrib1f(a_PointSize, 10.0)
+
+            //获取片元着色器uniform变量u_FragColor的存储地址
+            var u_FragColor = gl.getUniformLocation(program, 'u_FragColor');
+
+            // 设置canvas的背景色
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+
+            //清空canvas
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            //注册鼠标点击响应事件
+            canvas.onmousedown = function (ev) {
+                click(ev, gl, canvas, a_Position, u_FragColor)
+            }
+        }
+
+        var g_points = []
+        var g_colors = []
+
+        // 定义点击事件的处理函数
+        function click(ev, gl, canvas, a_Position, u_FragColor) {
+            var x = ev.clientX; // 浏览器中鼠标点击的x坐标
+            var y = ev.clientY; // 浏览器中鼠标点击的y坐标
+
+            //将浏览器的坐标系转换成WebGL坐标系
+            var rect = ev.target.getBoundingClientRect()
+            x = ((x - rect.left) - canvas.height / 2) / (canvas.height / 2)
+            y = (canvas.width / 2 - (y - rect.top)) / (canvas.width / 2)
+
+            // 将点的位置信息存储到g_points中
+            g_points.push([x, y])
+
+            // 将点的颜色信息存储到g_colors中
+            if (x >= 0.0 && y >= 0.0) { //第一象限
+                g_colors.push([1.0, 0.0, 0.0, 1.0]) //红色
+            } else if (x < 0.0 && y < 0.0) { //第三象限
+                g_colors.push([0.0, 1.0, 0.0, 1.0]) //绿色
+            } else { //第二、四象限
+                g_colors.push([0.0, 0.0, 1.0, 1.0]) //蓝色
+            }
+            //清空canvas
+            gl.clear(gl.COLOR_BUFFER_BIT)
+            var len = g_points.length
+            for (var i = 0; i < len; i++) {
+                //获取当前点的颜色数组
+                var rgba = g_colors[i]
+                //向顶点着色器attribute变量a_Position传值
+                gl.vertexAttrib3f(a_Position, g_points[i][0], g_points[i][1], 0.0)
+                //向片元着色器uniform变量u_FragColor传值
+                gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3])
+                //绘制点
+                gl.drawArrays(gl.POINTS, 0, 1)
+            }
+        }
+
+        init()
+
+    </script>
+</body>
+
+
+</html>

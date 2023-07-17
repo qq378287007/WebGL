@@ -1,0 +1,68 @@
+//gl_开头的变量是着色器的内置变量
+
+什么attribute变量
+  存储限定符, 定义全局变量
+  这种变量的数据将由外部向顶点着色器内传输，并保存顶点相关的数据，
+  只有顶点着色器才能使用它。
+使用attribute变量
+  在顶点着色器中, 声明一个attribute变量。
+  将attribute变量赋值给gl_Position变量。
+向attribute变量传输数据
+  使用缓存区关联attribute变量
+  创建缓存区对象
+  绑定缓存区对象
+  将数据写入对象
+  将缓存区对象分配给attribute变量
+  开启attribute变量
+
+
+//webgl的前置工作
+//创建着色器 -> 传入着色器代码 -> 编译着色器 -> 创建着色器程序 -> 绑定、连接、启用着色器 -> 进行绘制
+
+//顶点着色器
+const VERTEX_SHADER_SOURCE = `
+	void main() {
+	  gl_Position = vec4(0.0, 0.0, 0.0, 1.0);//设置坐标
+	  gl_PointSize = 10.0;//设置尺寸
+	}  
+`
+
+//片元着色器
+const FRAGMENT_SHADER_SOURCE = `
+	void main() {
+	  gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);//设置颜色
+	}   
+`
+
+
+//gl代表渲染上下文
+//VERTEX_SHADER_SOURCE代表顶点着色器代码
+//FRAGMENT_SHADER_SOURCE代表片元着色器代码
+function initShader(gl, VERTEX_SHADER_SOURCE, FRAGMENT_SHADER_SOURCE) {
+	// 创建着色器
+    const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+
+	// 指定着色器对象的代码
+    gl.shaderSource(vertexShader, VERTEX_SHADER_SOURCE);
+    gl.shaderSource(fragmentShader, FRAGMENT_SHADER_SOURCE);
+
+    //编译着色器
+    gl.compileShader(vertexShader);
+    gl.compileShader(fragmentShader);
+
+    //创建程序对象
+    const program = gl.createProgram();
+
+	// 为程序对象分配顶点着色器和片元着色器
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+
+	// 连接program指定的程序对象中的着色器
+    gl.linkProgram(program);
+    
+    //告知WebGL系统绘制时使用program指定的程序对象
+    gl.useProgram(program);
+
+    return program;
+}

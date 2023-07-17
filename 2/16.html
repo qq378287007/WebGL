@@ -1,0 +1,317 @@
+<html>
+
+<body>
+    <canvas id="webgl"></canvas>
+
+    <script>
+        var VSHADER_SOURCE = `
+    attribute vec4 a_Position;
+    attribute vec4 a_Color;
+    uniform mat4 u_ViewMatrix;
+    varying vec4 v_Color;
+    void main() {
+        gl_Position = u_ViewMatrix * a_Position;
+        v_Color = a_Color;
+    }`
+
+        var FSHADER_SOURCE = `
+    #ifdef GL_ES
+        precision mediump float;
+    #endif
+    varying vec4 v_Color;
+    void main() {
+        gl_FragColor = v_Color;
+    }`
+
+        function initShader(gl, VSHADER_SOURCE, FSHADER_SOURCE) {
+            var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+            var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+
+            gl.shaderSource(vertexShader, VSHADER_SOURCE);
+            gl.shaderSource(fragmentShader, FSHADER_SOURCE);
+
+            gl.compileShader(vertexShader);
+            gl.compileShader(fragmentShader);
+
+            var program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            gl.useProgram(program);
+            gl.program = program;
+
+            return program;
+        }
+
+        function initVertexBuffers(gl) {
+            var verticesColors = new Float32Array([
+                //最后面的三角形
+                0.0, 0.5, -0.4, 0.4, 1.0, 0.4,
+                -0.5, -0.5, -0.4, 0.4, 1.0, 0.4,
+                0.5, -0.5, -0.4, 1.0, 0.4, 0.4,
+
+                //中间的三角形
+                0.5, 0.4, -0.2, 1.0, 0.4, 0.4,
+                -0.5, 0.4, -0.2, 1.0, 1.0, 0.4,
+                0.0, -0.6, -0.2, 1.0, 1.0, 0.4,
+
+                //最前面的三角形
+                0.0, 0.5, 0.0, 0.4, 0.4, 1.0,
+                -0.5, -0.5, 0.0, 0.4, 0.4, 1.0,
+                0.5, -0.5, 0.0, 1.0, 0.4, 0.4,
+            ]);
+
+            //创建缓冲区对象
+            var vertexColorBuffer = gl.createBuffer();
+            if (!vertexColorBuffer) {
+                console.log('创建缓冲区对象失败！')
+                return -1
+            }
+
+            //将顶点坐标和顶点颜色信息写入缓冲区对象
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer)
+            gl.bufferData(gl.ARRAY_BUFFER, verticesColors, gl.STATIC_DRAW)
+
+            //获取类型化数组中每个元素的大小
+            var FSIZE = verticesColors.BYTES_PER_ELEMENT
+
+            //获取顶点着色器attribute变量a_Position的存储地址, 分配缓存并开启
+            var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+            gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, FSIZE * 6, 0)
+            gl.enableVertexAttribArray(a_Position)
+
+            //获取顶点着色器attribute变量a_Color(顶点颜色信息)的存储地址, 分配缓存并开启
+            var a_Color = gl.getAttribLocation(gl.program, 'a_Color');
+            gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, FSIZE * 6, FSIZE * 3)
+            gl.enableVertexAttribArray(a_Color)
+
+            // 解绑缓冲区对象
+            gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+            return verticesColors.length / 6
+        }
+
+        //初始化模型矩阵
+        function Matrix4() {
+            this.elements = new Float32Array([
+                1.0, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0,
+            ])
+        }
+
+        // 设置平移
+        Matrix4.prototype.translate = function (x, y, z) {
+            var mat = new Float32Array([
+                1.0, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                x, y, z, 1.0,
+            ])
+            this.elements = matrix44Multiply(mat, this.elements)
+        }
+
+        // 设置旋转
+        Matrix4.prototype.rotate = function (rad, x, y, z) {
+            var mat = []
+            if (x > 0) {
+                // 绕x轴的旋转矩阵
+                mat = new Float32Array([
+                    1.0, 0.0, 0.0, 0.0,
+                    0.0, Math.cos(rad), -Math.sin(rad), 0.0,
+                    0.0, Math.sin(rad), Math.cos(rad), 0.0,
+                    0.0, 0.0, 0.0, 1.0,
+                ]);
+            } else if (y > 0) {
+                // 绕y轴的旋转矩阵
+                mat = new Float32Array([
+                    Math.cos(rad), 0.0, -Math.sin(rad), 0.0,
+                    0.0, 1.0, 0.0, 0.0,
+                    Math.sin(rad), 0.0, Math.cos(rad), 0.0,
+                    0.0, 0.0, 0.0, 1.0,
+                ]);
+            } else if (z > 0) {
+                // 绕z轴的旋转矩阵
+                mat = new Float32Array([
+                    Math.cos(rad), Math.sin(rad), 0.0, 0.0,
+                    -Math.sin(rad), Math.cos(rad), 0.0, 0.0,
+                    0.0, 0.0, 1.0, 0.0,
+                    0.0, 0.0, 0.0, 1.0,
+                ]);
+            } else {
+                // 单位矩阵
+                mat = new Float32Array([
+                    1.0, 0.0, 0.0, 0.0,
+                    0.0, 1.0, 0.0, 0.0,
+                    0.0, 0.0, 1.0, 0.0,
+                    0.0, 0.0, 0.0, 1.0,
+                ]);
+            }
+            this.elements = matrix44Multiply(mat, this.elements)
+        }
+
+        // 设置缩放
+        Matrix4.prototype.scale = function (xScale, yScale, zScale) {
+            var mat = new Float32Array([
+                xScale, 0.0, 0.0, 0.0,
+                0.0, yScale, 0.0, 0.0,
+                0.0, 0.0, zScale, 0.0,
+                0.0, 0.0, 0.0, 1.0,
+            ])
+            this.elements = matrix44Multiply(mat, this.elements)
+        }
+
+        Matrix4.prototype.setLookAt = function (eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ) {
+            var e, fx, fy, fz, rlf, sx, sy, sz, rls, ux, uy, uz;
+
+            fx = centerX - eyeX;
+            fy = centerY - eyeY;
+            fz = centerZ - eyeZ;
+
+            // Normalize f.
+            rlf = 1 / Math.sqrt(fx * fx + fy * fy + fz * fz);
+            fx *= rlf;
+            fy *= rlf;
+            fz *= rlf;
+
+            // Calculate cross product of f and up.
+            sx = fy * upZ - fz * upY;
+            sy = fz * upX - fx * upZ;
+            sz = fx * upY - fy * upX;
+
+            // Normalize s.
+            rls = 1 / Math.sqrt(sx * sx + sy * sy + sz * sz);
+            sx *= rls;
+            sy *= rls;
+            sz *= rls;
+
+            // Calculate cross product of s and f.
+            ux = sy * fz - sz * fy;
+            uy = sz * fx - sx * fz;
+            uz = sx * fy - sy * fx;
+
+            // Set to this.
+            e = this.elements;
+            e[0] = sx;
+            e[1] = ux;
+            e[2] = -fx;
+            e[3] = 0;
+
+            e[4] = sy;
+            e[5] = uy;
+            e[6] = -fy;
+            e[7] = 0;
+
+            e[8] = sz;
+            e[9] = uz;
+            e[10] = -fz;
+            e[11] = 0;
+
+            e[12] = 0;
+            e[13] = 0;
+            e[14] = 0;
+            e[15] = 1;
+
+            // Translate.
+            return this.translate(-eyeX, -eyeY, -eyeZ);
+        };
+
+        //4*4矩阵乘法
+        function matrix44Multiply(mat1, mat2) {
+            var dest = new Float32Array([
+                1.0, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0,
+            ])
+            var a = mat1[0],
+                b = mat1[1],
+                c = mat1[2],
+                d = mat1[3],
+                e = mat1[4],
+                f = mat1[5],
+                g = mat1[6],
+                h = mat1[7],
+                i = mat1[8],
+                j = mat1[9],
+                k = mat1[10],
+                l = mat1[11],
+                m = mat1[12],
+                n = mat1[13],
+                o = mat1[14],
+                p = mat1[15],
+                A = mat2[0],
+                B = mat2[1],
+                C = mat2[2],
+                D = mat2[3],
+                E = mat2[4],
+                F = mat2[5],
+                G = mat2[6],
+                H = mat2[7],
+                I = mat2[8],
+                J = mat2[9],
+                K = mat2[10],
+                L = mat2[11],
+                M = mat2[12],
+                N = mat2[13],
+                O = mat2[14],
+                P = mat2[15];
+            dest[0] = A * a + B * e + C * i + D * m;
+            dest[1] = A * b + B * f + C * j + D * n;
+            dest[2] = A * c + B * g + C * k + D * o;
+            dest[3] = A * d + B * h + C * l + D * p;
+            dest[4] = E * a + F * e + G * i + H * m;
+            dest[5] = E * b + F * f + G * j + H * n;
+            dest[6] = E * c + F * g + G * k + H * o;
+            dest[7] = E * d + F * h + G * l + H * p;
+            dest[8] = I * a + J * e + K * i + L * m;
+            dest[9] = I * b + J * f + K * j + L * n;
+            dest[10] = I * c + J * g + K * k + L * o;
+            dest[11] = I * d + J * h + K * l + L * p;
+            dest[12] = M * a + N * e + O * i + P * m;
+            dest[13] = M * b + N * f + O * j + P * n;
+            dest[14] = M * c + N * g + O * k + P * o;
+            dest[15] = M * d + N * h + O * l + P * p;
+            return dest;
+        }
+
+        function init() {
+            const canvas = document.getElementById('webgl');
+            const gl = canvas.getContext('webgl');
+            if (!initShader(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
+                console.log('初始化着色器失败');
+                return;
+            }
+
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            var n = initVertexBuffers(gl)
+
+            var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
+            if (!u_ViewMatrix) {
+                console.log('获取u_ViewMatrix的存储地址失败！');
+                return;
+            }
+
+            //初始化模型矩阵
+            var viewMatrix = new Matrix4()
+
+            //设置视点、视线和上方向
+            viewMatrix.setLookAt(0.20, 0.25, 0.25, 0, 0, 0, 0, 1, 0)
+
+            //将视图矩阵传给顶点着色器uniform变量u_ViewMatrix
+            //false，列优先
+            gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements)
+
+            //绘制三角形
+            gl.drawArrays(gl.TRIANGLES, 0, n)
+        }
+
+        init()
+    </script>
+</body>
+
+
+</html>

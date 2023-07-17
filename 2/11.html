@@ -1,0 +1,252 @@
+<html>
+
+<body>
+    <canvas id="webgl"></canvas>
+
+    <script>
+        var VSHADER_SOURCE = `
+    attribute vec4 a_Position;
+    uniform mat4 u_ModelMatrix;
+    void main() {
+        gl_Position = u_ModelMatrix * a_Position;
+    }`
+
+        var FSHADER_SOURCE = `
+    precision mediump float;
+    uniform vec4 u_FragColor;
+    void main() {
+        gl_FragColor = u_FragColor;
+    }`
+
+        function initShader(gl, VSHADER_SOURCE, FSHADER_SOURCE) {
+            var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+            var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+
+            gl.shaderSource(vertexShader, VSHADER_SOURCE);
+            gl.shaderSource(fragmentShader, FSHADER_SOURCE);
+
+            gl.compileShader(vertexShader);
+            gl.compileShader(fragmentShader);
+
+            var program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+            gl.useProgram(program);
+            gl.program = program;
+
+            return program;
+        }
+
+        function setFragColor(gl) {
+            var u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
+            gl.uniform4f(u_FragColor, 0.0, 1.0, 0.0, 1.0) //绿色
+        }
+
+        function initVertexBuffers(gl) {
+            var vertices = new Float32Array([
+                0.0, 0.5,
+                -0.5, -0.5,
+                0.5, -0.5
+            ])
+
+            var vertexBuffer = gl.createBuffer();
+            if (!vertexBuffer) {
+                console.log('创建缓冲区对象失败！')
+                return -1
+            }
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
+
+            var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+            gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0)
+
+            gl.enableVertexAttribArray(a_Position)
+
+            return vertices.length / 2
+        }
+
+        //初始化模型矩阵
+        function Matrix4() {
+            this.currentMatrix = new Float32Array([
+                1.0, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0,
+            ])
+        }
+
+        // 设置平移
+        Matrix4.prototype.translate = function (x, y, z) {
+            var mat = new Float32Array([
+                1.0, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                x, y, z, 1.0,
+            ])
+            this.currentMatrix = matrix44Multiply(mat, this.currentMatrix)
+        }
+
+        // 设置旋转
+        Matrix4.prototype.rotate = function (rad, x, y, z) {
+            var mat = []
+            if (x > 0) {
+                // 绕x轴的旋转矩阵
+                mat = new Float32Array([
+                    1.0, 0.0, 0.0, 0.0,
+                    0.0, Math.cos(rad), -Math.sin(rad), 0.0,
+                    0.0, Math.sin(rad), Math.cos(rad), 0.0,
+                    0.0, 0.0, 0.0, 1.0,
+                ]);
+            } else if (y > 0) {
+                // 绕y轴的旋转矩阵
+                mat = new Float32Array([
+                    Math.cos(rad), 0.0, -Math.sin(rad), 0.0,
+                    0.0, 1.0, 0.0, 0.0,
+                    Math.sin(rad), 0.0, Math.cos(rad), 0.0,
+                    0.0, 0.0, 0.0, 1.0,
+                ]);
+            } else if (z > 0) {
+                // 绕z轴的旋转矩阵
+                mat = new Float32Array([
+                    Math.cos(rad), Math.sin(rad), 0.0, 0.0,
+                    -Math.sin(rad), Math.cos(rad), 0.0, 0.0,
+                    0.0, 0.0, 1.0, 0.0,
+                    0.0, 0.0, 0.0, 1.0,
+                ]);
+            } else {
+                // 单位矩阵
+                mat = new Float32Array([
+                    1.0, 0.0, 0.0, 0.0,
+                    0.0, 1.0, 0.0, 0.0,
+                    0.0, 0.0, 1.0, 0.0,
+                    0.0, 0.0, 0.0, 1.0,
+                ]);
+            }
+            this.currentMatrix = matrix44Multiply(mat, this.currentMatrix)
+        }
+
+        // 设置缩放
+        Matrix4.prototype.scale = function (xScale, yScale, zScale) {
+            var mat = new Float32Array([
+                xScale, 0.0, 0.0, 0.0,
+                0.0, yScale, 0.0, 0.0,
+                0.0, 0.0, zScale, 0.0,
+                0.0, 0.0, 0.0, 1.0,
+            ])
+            this.currentMatrix = matrix44Multiply(mat, this.currentMatrix)
+        }
+
+        //4*4矩阵乘法
+        function matrix44Multiply(mat1, mat2) {
+            var dest = new Float32Array([
+                1.0, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0,
+            ])
+            var a = mat1[0],
+                b = mat1[1],
+                c = mat1[2],
+                d = mat1[3],
+                e = mat1[4],
+                f = mat1[5],
+                g = mat1[6],
+                h = mat1[7],
+                i = mat1[8],
+                j = mat1[9],
+                k = mat1[10],
+                l = mat1[11],
+                m = mat1[12],
+                n = mat1[13],
+                o = mat1[14],
+                p = mat1[15],
+                A = mat2[0],
+                B = mat2[1],
+                C = mat2[2],
+                D = mat2[3],
+                E = mat2[4],
+                F = mat2[5],
+                G = mat2[6],
+                H = mat2[7],
+                I = mat2[8],
+                J = mat2[9],
+                K = mat2[10],
+                L = mat2[11],
+                M = mat2[12],
+                N = mat2[13],
+                O = mat2[14],
+                P = mat2[15];
+            dest[0] = A * a + B * e + C * i + D * m;
+            dest[1] = A * b + B * f + C * j + D * n;
+            dest[2] = A * c + B * g + C * k + D * o;
+            dest[3] = A * d + B * h + C * l + D * p;
+            dest[4] = E * a + F * e + G * i + H * m;
+            dest[5] = E * b + F * f + G * j + H * n;
+            dest[6] = E * c + F * g + G * k + H * o;
+            dest[7] = E * d + F * h + G * l + H * p;
+            dest[8] = I * a + J * e + K * i + L * m;
+            dest[9] = I * b + J * f + K * j + L * n;
+            dest[10] = I * c + J * g + K * k + L * o;
+            dest[11] = I * d + J * h + K * l + L * p;
+            dest[12] = M * a + N * e + O * i + P * m;
+            dest[13] = M * b + N * f + O * j + P * n;
+            dest[14] = M * c + N * g + O * k + P * o;
+            dest[15] = M * d + N * h + O * l + P * p;
+            return dest;
+        }
+
+        function init() {
+            const canvas = document.getElementById('webgl');
+            const gl = canvas.getContext('webgl');
+            initShader(gl, VSHADER_SOURCE, FSHADER_SOURCE);
+
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            setFragColor(gl)
+
+            var n = initVertexBuffers(gl)
+
+            var u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
+
+            //初始化模型矩阵
+            var modelMatrix = new Matrix4()
+
+            var g_LastTime = Date.now(); // 上次绘制的时间
+            var ANGLE_SET = 45; // 旋转速度（度/秒）
+            var rad = 0.0; // 启始角度
+
+            var tick = function () {
+                var now = Date.now()
+                var elapsed = now - g_LastTime //上次调用与当前时间差
+                g_LastTime = now
+                rad = ((rad + ANGLE_SET * elapsed / 1000) % 360) * Math.PI / 180; // 当前的弧度
+
+                //将旋转信息输入模型矩阵
+                modelMatrix.rotate(rad, 0.0, 0.0, 1.0)
+
+                //将平移信息输入模型矩阵
+                //modelMatrix.translate(0.006, 0.0, 0.0)
+
+                //清空canvas
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                //向顶点着色器uniform变量u_ModelMatrix传值
+                gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.currentMatrix)
+
+                //绘制三角形
+                gl.drawArrays(gl.TRIANGLES, 0, n)
+                requestAnimationFrame(tick);
+            }
+
+            tick() // 调用tick
+        }
+
+        init()
+    </script>
+</body>
+
+
+</html>
