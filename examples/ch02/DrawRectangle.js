@@ -1,11 +1,11 @@
 // DrawTriangle.js (c) 2012 matsuda
-function main() {  
+function main() {
   // Retrieve <canvas> element
-  var canvas = document.getElementById('example');  
-  if (!canvas) { 
+  var canvas = document.getElementById('example');
+  if (!canvas) {
     console.log('Failed to retrieve the <canvas> element');
-    return false; 
-  } 
+    return false;
+  }
 
   // Get the rendering context for 2DCG
   var ctx = canvas.getContext('2d');
