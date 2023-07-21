@@ -1,19 +1,71 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Change triangle color by FragCoord</title>
-  </head>
+<html>
 
-  <body onload="main()">
-    <canvas id="webgl" width="400" height="400">
-    Please use a browser that supports "canvas"
-    </canvas>
+<body>
+  <canvas id="cvs" />
 
-    <script src="../lib/webgl-utils.js"></script>
-    <script src="../lib/webgl-debug.js"></script>
-    <script src="../lib/cuon-utils.js"></script>
-    <script src="../lib/cuon-matrix.js"></script>
-    <script src="HelloTriangle_FragCoord.js"></script>
-  </body>
+  <script>
+    function initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE) {
+      const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+      gl.shaderSource(vertexShader, VSHADER_SOURCE);
+      gl.compileShader(vertexShader);
+
+      const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+      gl.shaderSource(fragmentShader, FSHADER_SOURCE);
+      gl.compileShader(fragmentShader);
+
+      const program = gl.createProgram();
+      gl.attachShader(program, vertexShader);
+      gl.attachShader(program, fragmentShader);
+      gl.linkProgram(program);
+      gl.useProgram(program);
+      gl.program = program;
+    }
+
+    function initVertexBuffers(gl) {
+      const vertices = new Float32Array([0, 0.5, -0.5, -0.5, 0.5, -0.5]);
+      
+      const vertexBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+      const a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+      gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray(a_Position);
+
+      const u_Width = gl.getUniformLocation(gl.program, 'u_Width');
+      gl.uniform1f(u_Width, gl.drawingBufferWidth);
+
+      const u_Height = gl.getUniformLocation(gl.program, 'u_Height');
+      gl.uniform1f(u_Height, gl.drawingBufferHeight);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+      return vertices.length / 2;
+    }
+
+    const VSHADER_SOURCE = `
+    attribute vec4 a_Position;
+    void main(){
+      gl_Position = a_Position;
+    }`;
+
+    const FSHADER_SOURCE = `
+    precision mediump float;
+    uniform float u_Width;
+    uniform float u_Height;
+    void main(){
+      gl_FragColor = vec4(gl_FragCoord.x / u_Width, 0.0, gl_FragCoord.y / u_Height, 1.0);
+    }`;
+
+    const gl = document.getElementById('cvs').getContext('webgl');
+    initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE);
+
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    const n = initVertexBuffers(gl);
+    gl.drawArrays(gl.TRIANGLES, 0, n);
+  </script>
+</body>
+
 </html>
