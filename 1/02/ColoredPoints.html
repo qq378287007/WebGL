@@ -2,24 +2,9 @@
 
 <body>
     <canvas id="cvs" />
+    <script src="initShaders.js"></script>
+    <script src="writeGLData.js"></script>
     <script>
-        function initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE) {
-            const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-            gl.shaderSource(vertexShader, VSHADER_SOURCE);
-            gl.compileShader(vertexShader);
-
-            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-            gl.shaderSource(fragmentShader, FSHADER_SOURCE);
-            gl.compileShader(fragmentShader);
-
-            const program = gl.createProgram();
-            gl.attachShader(program, vertexShader);
-            gl.attachShader(program, fragmentShader);
-            gl.linkProgram(program);
-            gl.useProgram(program);
-            gl.program = program;
-        }
-
         const VSHADER_SOURCE = `
         attribute vec4 a_Position;
         void main(){
@@ -40,33 +25,29 @@
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
-        const a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-        const u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
-
-        canvas.onmousedown = function (ev) { click(ev, gl, canvas, a_Position, u_FragColor); };
+        canvas.onmousedown = function (ev) { click(ev, canvas, gl); };
 
         const g_points = [];
         const g_colors = [];
-        function click(ev, gl, canvas, a_Position) {
+        function click(ev, canvas, gl) {
             const rect = ev.target.getBoundingClientRect();
             const x = (ev.clientX - rect.left) / canvas.width * 2 - 1;
             const y = 1 - (ev.clientY - rect.top) / canvas.height * 2;
             g_points.push([x, y]);
-            if (x >= 0.0 && y >= 0.0) {
+            if (x >= 0.0 && y >= 0.0)
                 g_colors.push([1.0, 0.0, 0.0, 1.0]);
-            } else if (x < 0.0 && y < 0.0) {
+            else if (x < 0.0 && y < 0.0)
                 g_colors.push([0.0, 1.0, 0.0, 1.0]);
-            } else {
+            else
                 g_colors.push([1.0, 1.0, 1.0, 1.0]);
-            }
 
             gl.clear(gl.COLOR_BUFFER_BIT);
             for (var i = 0; i < g_points.length; i++) {
                 const xy = g_points[i];
                 const rgba = g_colors[i];
 
-                gl.vertexAttrib3f(a_Position, xy[0], xy[1], 0.0);
-                gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3]);
+                writeAttribFv(gl, 'a_Position', xy);
+                writeUniformFv(gl, 'u_FragColor', rgba);
                 gl.drawArrays(gl.POINTS, 0, 1);
             }
         }

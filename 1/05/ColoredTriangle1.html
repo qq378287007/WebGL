@@ -2,25 +2,8 @@
 
 <body>
   <canvas id="cvs" />
-
+  <script src="initShaders.js"></script>
   <script>
-    function initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE) {
-      const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-      gl.shaderSource(vertexShader, VSHADER_SOURCE);
-      gl.compileShader(vertexShader);
-
-      const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-      gl.shaderSource(fragmentShader, FSHADER_SOURCE);
-      gl.compileShader(fragmentShader);
-
-      const program = gl.createProgram();
-      gl.attachShader(program, vertexShader);
-      gl.attachShader(program, fragmentShader);
-      gl.linkProgram(program);
-      gl.useProgram(program);
-      gl.program = program;
-    }
-
     function initVertexBuffers(gl) {
       const verticesColors = new Float32Array([
         0.0, 0.5, 1.0, 0.0, 0.0,
@@ -40,6 +23,8 @@
       const a_Color = gl.getAttribLocation(gl.program, 'a_Color');
       gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, FSIZE * 5, FSIZE * 2);
       gl.enableVertexAttribArray(a_Color);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
       return verticesColors.length / 5;
     }
@@ -62,7 +47,6 @@
 
     const gl = document.getElementById('cvs').getContext('webgl');
     initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE);
-
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 

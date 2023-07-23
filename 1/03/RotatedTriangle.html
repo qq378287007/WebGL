@@ -2,24 +2,9 @@
 
 <body>
   <canvas id="cvs" />
+  <script src="initShaders.js"></script>
+  <script src="writeGLData.js"></script>
   <script>
-    function initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE) {
-      const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-      gl.shaderSource(vertexShader, VSHADER_SOURCE);
-      gl.compileShader(vertexShader);
-
-      const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-      gl.shaderSource(fragmentShader, FSHADER_SOURCE);
-      gl.compileShader(fragmentShader);
-
-      const program = gl.createProgram();
-      gl.attachShader(program, vertexShader);
-      gl.attachShader(program, fragmentShader);
-      gl.linkProgram(program);
-      gl.useProgram(program);
-      gl.program = program;
-    }
-
     function initVertexBuffers(gl) {
       const vertices = new Float32Array([0, 0.5, -0.5, -0.5, 0.5, -0.5]);
 
@@ -36,12 +21,13 @@
 
     const VSHADER_SOURCE = `
         attribute vec4 a_Position;
-        uniform float u_CosB, u_SinB;
+        uniform float u_CosB;
+        uniform float u_SinB;
         void main(){
           gl_Position.x = a_Position.x * u_CosB - a_Position.y * u_SinB;
           gl_Position.y = a_Position.x * u_SinB + a_Position.y * u_CosB;
           gl_Position.z = a_Position.z;
-          gl_Position.w = 1.0;
+          gl_Position.w = a_Position.w;
         }`;
 
     const FSHADER_SOURCE = `
@@ -51,24 +37,18 @@
 
     const canvas = document.getElementById('cvs');
     const gl = canvas.getContext('webgl');
-
     initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE);
-
-    const n = initVertexBuffers(gl);
-
-    const ANGLE = 90.0;
-    const radian = Math.PI * ANGLE / 180.0; // Convert to radians
-    const cosB = Math.cos(radian);
-    const sinB = Math.sin(radian);
-
-    const u_CosB = gl.getUniformLocation(gl.program, 'u_CosB');
-    gl.uniform1f(u_CosB, cosB);
-
-    const u_SinB = gl.getUniformLocation(gl.program, 'u_SinB');
-    gl.uniform1f(u_SinB, sinB);
-
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
+
+    const ANGLE = 90.0;
+    const radian = Math.PI * ANGLE / 180.0;
+    const cosB = Math.cos(radian);
+    const sinB = Math.sin(radian);
+    writeUniformF(gl, 'u_CosB', cosB);
+    writeUniformF(gl, 'u_SinB', sinB);
+
+    const n = initVertexBuffers(gl);
     gl.drawArrays(gl.TRIANGLES, 0, n);
   </script>
 </body>

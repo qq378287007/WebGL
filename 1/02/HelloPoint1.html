@@ -2,24 +2,8 @@
 
 <body>
     <canvas id="cvs" />
+    <script src="initShaders.js"></script>
     <script>
-        function initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE) {
-            const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-            gl.shaderSource(vertexShader, VSHADER_SOURCE);
-            gl.compileShader(vertexShader);
-
-            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-            gl.shaderSource(fragmentShader, FSHADER_SOURCE);
-            gl.compileShader(fragmentShader);
-
-            const program = gl.createProgram();
-            gl.attachShader(program, vertexShader);
-            gl.attachShader(program, fragmentShader);
-            gl.linkProgram(program);
-            gl.useProgram(program);
-            gl.program = program;
-        }
-
         const VSHADER_SOURCE = `
         void main(){
             gl_Position = vec4(0.5, 0.5, 0.0, 1.0);

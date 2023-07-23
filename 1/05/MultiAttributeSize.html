@@ -2,25 +2,8 @@
 
 <body>
   <canvas id="cvs" />
-
+  <script src="initShaders.js"></script>
   <script>
-    function initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE) {
-      const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-      gl.shaderSource(vertexShader, VSHADER_SOURCE);
-      gl.compileShader(vertexShader);
-
-      const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-      gl.shaderSource(fragmentShader, FSHADER_SOURCE);
-      gl.compileShader(fragmentShader);
-
-      const program = gl.createProgram();
-      gl.attachShader(program, vertexShader);
-      gl.attachShader(program, fragmentShader);
-      gl.linkProgram(program);
-      gl.useProgram(program);
-      gl.program = program;
-    }
-
     function initVertexBuffers(gl) {
       const vertices = new Float32Array([0.0, 0.5, -0.5, -0.5, 0.5, -0.5]);
       var vertexBuffer = gl.createBuffer();
@@ -29,6 +12,7 @@
       var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
       gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
       gl.enableVertexAttribArray(a_Position);
+      gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
       const sizes = new Float32Array([10.0, 20.0, 30.0]);
       var sizeBuffer = gl.createBuffer();
@@ -37,7 +21,6 @@
       var a_PointSize = gl.getAttribLocation(gl.program, 'a_PointSize');
       gl.vertexAttribPointer(a_PointSize, 1, gl.FLOAT, false, 0, 0);
       gl.enableVertexAttribArray(a_PointSize);
-
       gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
       return 3;
@@ -58,7 +41,6 @@
 
     const gl = document.getElementById('cvs').getContext('webgl');
     initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE);
-
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
