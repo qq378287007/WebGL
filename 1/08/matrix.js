@@ -67,18 +67,23 @@ Matrix4.prototype.set = function (src) {
 };
 
 Matrix4.prototype.concat = function (other) {
-    const e = this.elements;
-    const a = this.elements;
-    const b = other.elements;
+    var i, e, a, b, ai0, ai1, ai2, ai3;
 
+    // Calculate e = a * b
+    e = this.elements;
+    a = this.elements;
+    b = other.elements;
+
+    // If e equals b, copy b to temporary matrix.
     if (e === b) {
         b = new Float32Array(16);
-        for (var i = 0; i < 16; ++i)
+        for (i = 0; i < 16; ++i) {
             b[i] = e[i];
+        }
     }
 
-    for (var i = 0; i < 4; i++) {
-        const ai0 = a[i]; const ai1 = a[i + 4]; const ai2 = a[i + 8]; const ai3 = a[i + 12];
+    for (i = 0; i < 4; i++) {
+        ai0 = a[i]; ai1 = a[i + 4]; ai2 = a[i + 8]; ai3 = a[i + 12];
         e[i] = ai0 * b[0] + ai1 * b[1] + ai2 * b[2] + ai3 * b[3];
         e[i + 4] = ai0 * b[4] + ai1 * b[5] + ai2 * b[6] + ai3 * b[7];
         e[i + 8] = ai0 * b[8] + ai1 * b[9] + ai2 * b[10] + ai3 * b[11];
@@ -123,6 +128,20 @@ Matrix4.prototype.translate = function (x, y, z) {
     e[13] += e[1] * x + e[5] * y + e[9] * z;
     e[14] += e[2] * x + e[6] * y + e[10] * z;
     e[15] += e[3] * x + e[7] * y + e[11] * z;
+    return this;
+};
+
+Matrix4.prototype.transpose = function () {
+    const e = this.elements;
+
+    var t;
+    t = e[1]; e[1] = e[4]; e[4] = t;
+    t = e[2]; e[2] = e[8]; e[8] = t;
+    t = e[3]; e[3] = e[12]; e[12] = t;
+    t = e[6]; e[6] = e[9]; e[9] = t;
+    t = e[7]; e[7] = e[13]; e[13] = t;
+    t = e[11]; e[11] = e[14]; e[14] = t;
+
     return this;
 };
 
