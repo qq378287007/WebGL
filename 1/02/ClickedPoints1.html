@@ -23,10 +23,10 @@
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
-        canvas.onmousedown = function (ev) { click(ev, canvas, gl); };
+        canvas.onmousedown = function (ev) { click(ev); };
 
         const g_points = [];
-        function click(ev, canvas, gl) {
+        function click(ev) {
             const rect = ev.target.getBoundingClientRect();
             const x = (ev.clientX - rect.left) / canvas.width * 2 - 1;
             const y = 1 - (ev.clientY - rect.top) / canvas.height * 2;

@@ -4,21 +4,8 @@
   <canvas id="cvs" />
   <script src="initShaders.js"></script>
   <script src="writeGLData.js"></script>
+  <script src="initVertexBuffers.js"></script>
   <script>
-    function initVertexBuffers(gl) {
-      const vertices = new Float32Array([0, 0.5, -0.5, -0.5, 0.5, -0.5]);
-
-      const vertexBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-      const a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-      gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
-      gl.enableVertexAttribArray(a_Position);
-
-      return vertices.length / 2;
-    }
-
     const VSHADER_SOURCE = `
         attribute vec4 a_Position;
         uniform vec4 u_Translation;
@@ -37,10 +24,11 @@
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    const Tx = 0.8, Ty = 0.5, Tz = 0.0;
+    const Tx = 0.8, Ty = 0.7, Tz = 0.0;
     writeUniformF(gl, 'u_Translation', Tx, Ty, Tz, 0.0);
 
-    const n = initVertexBuffers(gl);
+    const vertices = new Float32Array([0, 0.5, -0.5, -0.5, 0.5, -0.5]);
+    const n = initVertexBuffers(gl, vertices, 'a_Position', 2);
     gl.drawArrays(gl.TRIANGLES, 0, n);
   </script>
 </body>

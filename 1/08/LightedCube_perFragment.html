@@ -129,11 +129,14 @@
     viewMatrix.setLookAt(0, 3, 10, 0, 0, 0, 0, 1, 0);
 
     const mvMatrix = new Matrix4();
-    mvMatrix.set(viewMatrix).rotate(60, 0, 1, 0);
+    //mvMatrix.set(viewMatrix).rotate(60, 0, 1, 0);
+    mvMatrix.setTranslate(0, 0.9, 0);
+    mvMatrix.rotate(90, 0, 0, 1);
 
     const mvpMatrix = new Matrix4();
     mvpMatrix.setPerspective(30, 1, 1, 100);
-    //mvpMatrix.multiply(mvMatrix);
+    mvpMatrix.lookAt(3, 3, 7, 0, 0, 0, 0, 1, 0);
+    mvpMatrix.multiply(mvMatrix);
     writeUniformMatrix4fv(gl, 'u_mvpMatrix', mvpMatrix.elements);
 
     const normalMatrix = new Matrix4();
@@ -143,9 +146,10 @@
 
     const lightDir = new Vector3([1.0, 1.0, 1.0]);
     lightDir.normalize();
-    const lightDir_eye = viewMatrix.multiplyVector3(lightDir);
-    lightDir_eye.normalize();
-    writeUniformFv(gl, 'u_LightDir', lightDir_eye.elements);
+    //const lightDir_eye = viewMatrix.multiplyVector3(lightDir);
+    //lightDir_eye.normalize();
+    //writeUniformFv(gl, 'u_LightDir', lightDir_eye.elements);
+    writeUniformFv(gl, 'u_LightDir', lightDir.elements);
 
     const n = initVertexBuffers(gl);
     gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_BYTE, 0);

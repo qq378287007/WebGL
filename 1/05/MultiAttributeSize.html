@@ -3,29 +3,8 @@
 <body>
   <canvas id="cvs" />
   <script src="initShaders.js"></script>
+  <script src="initVertexBuffers.js"></script>
   <script>
-    function initVertexBuffers(gl) {
-      const vertices = new Float32Array([0.0, 0.5, -0.5, -0.5, 0.5, -0.5]);
-      var vertexBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-      var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-      gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
-      gl.enableVertexAttribArray(a_Position);
-      gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-      const sizes = new Float32Array([10.0, 20.0, 30.0]);
-      var sizeBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, sizeBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, sizes, gl.STATIC_DRAW);
-      var a_PointSize = gl.getAttribLocation(gl.program, 'a_PointSize');
-      gl.vertexAttribPointer(a_PointSize, 1, gl.FLOAT, false, 0, 0);
-      gl.enableVertexAttribArray(a_PointSize);
-      gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-      return 3;
-    }
-
     const VSHADER_SOURCE = `
     attribute vec4 a_Position;
     attribute float a_PointSize;
@@ -44,7 +23,10 @@
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    const n = initVertexBuffers(gl);
+    const vertices = new Float32Array([0.0, 0.5, -0.5, -0.5, 0.5, -0.5]);
+    initVertexBuffers(gl, vertices, 'a_Position', 2);
+    const sizes = new Float32Array([10.0, 20.0, 30.0]);
+    const n = initVertexBuffers(gl, sizes, 'a_PointSize', 1);
     gl.drawArrays(gl.POINTS, 0, n);
   </script>
 </body>

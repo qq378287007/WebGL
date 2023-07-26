@@ -88,7 +88,7 @@ function main() {
   gl.uniform3f(u_AmbientLight, 0.2, 0.2, 0.2);
 
   var modelMatrix = new Matrix4();  // Model matrix
-  var mvpMatrix = new Matrix4(); 　 // Model view projection matrix
+  var mvpMatrix = new Matrix4();    // Model view projection matrix
   var normalMatrix = new Matrix4(); // Transformation matrix for normals
 
   // Pass the model matrix to u_ModelMatrix
