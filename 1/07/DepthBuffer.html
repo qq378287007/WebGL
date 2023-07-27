@@ -5,40 +5,8 @@
   <script src="initShaders.js"></script>
   <script src="writeGLData.js"></script>
   <script src="matrix.js"></script>
+  <script src="initBuffers.js"></script>
   <script>
-    function initVertexBuffers(gl) {
-      const verticesColors = new Float32Array([
-        0.0, 1.0, 0.0, 0.4, 0.4, 1.0,
-        -0.5, -1.0, 0.0, 0.4, 0.4, 1.0,
-        0.5, -1.0, 0.0, 1.0, 0.4, 0.4,
-
-        0.0, 1.0, -2.0, 1.0, 1.0, 0.4,
-        -0.5, -1.0, -2.0, 1.0, 1.0, 0.4,
-        0.5, -1.0, -2.0, 1.0, 0.4, 0.4,
-
-        0.0, 1.0, -4.0, 0.4, 1.0, 0.4,
-        -0.5, -1.0, -4.0, 0.4, 1.0, 0.4,
-        0.5, -1.0, -4.0, 1.0, 0.4, 0.4,
-      ]);
-      const FSIZE = verticesColors.BYTES_PER_ELEMENT;
-
-      const vertexColorbuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorbuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, verticesColors, gl.STATIC_DRAW);
-
-      const a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-      gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, FSIZE * 6, 0);
-      gl.enableVertexAttribArray(a_Position);
-
-      const a_Color = gl.getAttribLocation(gl.program, 'a_Color');
-      gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, FSIZE * 6, FSIZE * 3);
-      gl.enableVertexAttribArray(a_Color);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-      return verticesColors.length / 6;
-    }
-
     const VSHADER_SOURCE = `
     attribute vec4 a_Position;
     attribute vec4 a_Color;
@@ -63,23 +31,40 @@
     gl.enable(gl.DEPTH_TEST);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    const modelMatrix = new Matrix4();
-    const viewMatrix = new Matrix4();
-    const projMatrix = new Matrix4();
-    const mvpMatrix = new Matrix4();
+    const verticesColors = new Float32Array([
+      0.0, 1.0, 0.0, 0.4, 0.4, 1.0,
+      -0.5, -1.0, 0.0, 0.4, 0.4, 1.0,
+      0.5, -1.0, 0.0, 1.0, 0.4, 0.4,
 
+      0.0, 1.0, -2.0, 1.0, 1.0, 0.4,
+      -0.5, -1.0, -2.0, 1.0, 1.0, 0.4,
+      0.5, -1.0, -2.0, 1.0, 0.4, 0.4,
+
+      0.0, 1.0, -4.0, 0.4, 1.0, 0.4,
+      -0.5, -1.0, -4.0, 0.4, 1.0, 0.4,
+      0.5, -1.0, -4.0, 1.0, 0.4, 0.4,
+    ]);
+    const n = initArrayBuffer2(gl, verticesColors, 'a_Position', 3, 'a_Color', 3);
+
+    const modelMatrix = new Matrix4();
     modelMatrix.setTranslate(0.75, 0, 0);
+
+    const viewMatrix = new Matrix4();
     viewMatrix.setLookAt(0, 0, 5, 0, 0, -100, 0, 1, 0);
+
+    const projMatrix = new Matrix4();
     projMatrix.setPerspective(30, canvas.width / canvas.height, 1, 100);
+
+    const mvpMatrix = new Matrix4();
     mvpMatrix.set(projMatrix).multiply(viewMatrix).multiply(modelMatrix);
     writeUniformMatrix4fv(gl, 'u_MvpMatrix', mvpMatrix.elements);
 
-    const n = initVertexBuffers(gl);
     gl.drawArrays(gl.TRIANGLES, 0, n);
 
     modelMatrix.setTranslate(-0.75, 0, 0);
     mvpMatrix.set(projMatrix).multiply(viewMatrix).multiply(modelMatrix);
     writeUniformMatrix4fv(gl, 'u_MvpMatrix', mvpMatrix.elements);
+
     gl.drawArrays(gl.TRIANGLES, 0, n); 
   </script>
 </body>
