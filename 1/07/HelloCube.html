@@ -5,71 +5,8 @@
   <script src="initShaders.js"></script>
   <script src="writeGLData.js"></script>
   <script src="matrix.js"></script>
+  <script src="initBuffers.js"></script>
   <script>
-    function initVertexBuffers(gl) {
-      // Create a cube
-      //    v6----- v5
-      //   /|      /|
-      //  v1------v0|
-      //  | |     | |
-      //  | |v7---|-|v4
-      //  |/      |/
-      //  v2------v3
-      /*
-      var verticesColors = new Float32Array([
-        1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  // v0 White
-        -1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  // v1 White
-        -1.0, -1.0, 1.0, 1.0, 1.0, 1.0,  // v2 White
-        1.0, -1.0, 1.0, 1.0, 1.0, 1.0,  // v3 White
-        1.0, -1.0, -1.0, 1.0, 1.0, 1.0,  // v4 White
-        1.0, 1.0, -1.0, 1.0, 1.0, 1.0,  // v5 White
-        -1.0, 1.0, -1.0, 1.0, 1.0, 1.0,  // v6 White
-        -1.0, -1.0, -1.0, 1.0, 1.0, 1.0   // v7 White
-      ]);
-      */
-      var verticesColors = new Float32Array([
-        1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  // v0 White
-        -1.0, 1.0, 1.0, 1.0, 0.0, 1.0,  // v1 Magenta
-        -1.0, -1.0, 1.0, 1.0, 0.0, 0.0,  // v2 Red
-        1.0, -1.0, 1.0, 1.0, 1.0, 0.0,  // v3 Yellow
-        1.0, -1.0, -1.0, 0.0, 1.0, 0.0,  // v4 Green
-        1.0, 1.0, -1.0, 0.0, 1.0, 1.0,  // v5 Cyan
-        -1.0, 1.0, -1.0, 0.0, 0.0, 1.0,  // v6 Blue
-        -1.0, -1.0, -1.0, 0.0, 0.0, 0.0   // v7 Black
-      ]);
-      var FSIZE = verticesColors.BYTES_PER_ELEMENT;
-
-      var vertexColorBuffer = gl.createBuffer();
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, verticesColors, gl.STATIC_DRAW);
-
-      var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-      gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, FSIZE * 6, 0);
-      gl.enableVertexAttribArray(a_Position);
-
-      var a_Color = gl.getAttribLocation(gl.program, 'a_Color');
-      gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, FSIZE * 6, FSIZE * 3);
-      gl.enableVertexAttribArray(a_Color);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, null);
-      
-      var indices = new Uint8Array([
-        0, 1, 2, 0, 2, 3,    // front
-        0, 3, 4, 0, 4, 5,    // right
-        0, 5, 6, 0, 6, 1,    // up
-        1, 6, 7, 1, 7, 2,    // left
-        7, 4, 3, 7, 3, 2,    // down
-        4, 7, 6, 4, 6, 5     // back
-      ]);
-      var indexBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
-      //gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);//error
-
-      return indices.length;
-    }
-
     const VSHADER_SOURCE = `
     attribute vec4 a_Position;
     attribute vec4 a_Color;
@@ -99,7 +36,46 @@
     mvpMatrix.lookAt(3, 3, 7, 0, 0, 0, 0, 1, 0);
     writeUniformMatrix4fv(gl, 'u_MvpMatrix', mvpMatrix.elements);
 
-    const n = initVertexBuffers(gl);
+    // Create a cube
+    //    v6----- v5
+    //   /|      /|
+    //  v1------v0|
+    //  | |     | |
+    //  | |v7---|-|v4
+    //  |/      |/
+    //  v2------v3
+    /*
+    const verticesColors = new Float32Array([
+      1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  // v0 White
+      -1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  // v1 White
+      -1.0, -1.0, 1.0, 1.0, 1.0, 1.0,  // v2 White
+      1.0, -1.0, 1.0, 1.0, 1.0, 1.0,  // v3 White
+      1.0, -1.0, -1.0, 1.0, 1.0, 1.0,  // v4 White
+      1.0, 1.0, -1.0, 1.0, 1.0, 1.0,  // v5 White
+      -1.0, 1.0, -1.0, 1.0, 1.0, 1.0,  // v6 White
+      -1.0, -1.0, -1.0, 1.0, 1.0, 1.0   // v7 White
+    ]);
+    */
+    const verticesColors = new Float32Array([
+      1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  // v0 White
+      -1.0, 1.0, 1.0, 1.0, 0.0, 1.0,  // v1 Magenta
+      -1.0, -1.0, 1.0, 1.0, 0.0, 0.0,  // v2 Red
+      1.0, -1.0, 1.0, 1.0, 1.0, 0.0,  // v3 Yellow
+      1.0, -1.0, -1.0, 0.0, 1.0, 0.0,  // v4 Green
+      1.0, 1.0, -1.0, 0.0, 1.0, 1.0,  // v5 Cyan
+      -1.0, 1.0, -1.0, 0.0, 0.0, 1.0,  // v6 Blue
+      -1.0, -1.0, -1.0, 0.0, 0.0, 0.0   // v7 Black
+    ]);
+    initVertexBuffers2(gl, verticesColors, 'a_Position', 3, 'a_Color', 3);
+    const indices = new Uint8Array([
+      0, 1, 2, 0, 2, 3,    // front
+      0, 3, 4, 0, 4, 5,    // right
+      0, 5, 6, 0, 6, 1,    // up
+      1, 6, 7, 1, 7, 2,    // left
+      7, 4, 3, 7, 3, 2,    // down
+      4, 7, 6, 4, 6, 5     // back
+    ]);
+    const n = initElementBuffers(gl, indices);
     gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_BYTE, 0);
   </script>
 </body>

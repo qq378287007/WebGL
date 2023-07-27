@@ -3,36 +3,8 @@
 <body>
   <canvas id="cvs" />
   <script src="initShaders.js"></script>
+  <script src="initVertexBuffers.js"></script>
   <script>
-    function initVertexBuffers(gl) {
-      const verticesColors = new Float32Array([ // Vertex coordinates and color
-        0.0, 0.5, -0.1, 0.0, 0.0, 1.0,  // The front blue one 
-        -0.5, -0.5, -0.1, 0.0, 0.0, 1.0,
-        0.5, -0.5, -0.1, 1.0, 1.0, 0.0,
-
-        0.5, 0.4, -0.5, 1.0, 1.0, 0.0,  // The red one is behind
-        -0.5, 0.4, -0.5, 1.0, 0.0, 0.0,
-        0.0, -0.6, -0.5, 1.0, 0.0, 0.0,
-      ]);
-      const FSIZE = verticesColors.BYTES_PER_ELEMENT;
-
-      const vertexColorbuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorbuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, verticesColors, gl.STATIC_DRAW);
-
-      const a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-      gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, FSIZE * 6, 0);
-      gl.enableVertexAttribArray(a_Position);
-
-      const a_Color = gl.getAttribLocation(gl.program, 'a_Color');
-      gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, FSIZE * 6, FSIZE * 3);
-      gl.enableVertexAttribArray(a_Color);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-      return verticesColors.length / 6;
-    }
-
     const VSHADER_SOURCE = `
     attribute vec4 a_Position;
     attribute vec4 a_Color;
@@ -55,7 +27,15 @@
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    const n = initVertexBuffers(gl);
+    const verticesColors = new Float32Array([
+      0.0, 0.5, -0.1, 0.0, 0.0, 1.0,  // The front blue one 
+      -0.5, -0.5, -0.1, 0.0, 0.0, 1.0,
+      0.5, -0.5, -0.1, 1.0, 1.0, 0.0,
+      0.5, 0.4, -0.5, 1.0, 1.0, 0.0,  // The red one is behind
+      -0.5, 0.4, -0.5, 1.0, 0.0, 0.0,
+      0.0, -0.6, -0.5, 1.0, 0.0, 0.0,
+    ]);
+    const n = initVertexBuffers2(gl, verticesColors, 'a_Position', 3, 'a_Color', 3);
     gl.drawArrays(gl.TRIANGLES, 0, n);
   </script>
 </body>
