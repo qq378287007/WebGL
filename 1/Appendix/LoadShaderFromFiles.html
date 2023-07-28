@@ -26,14 +26,12 @@
         VSHADER_SOURCE = fileString;
       else if (shader == 'f')
         FSHADER_SOURCE = fileString;
-
       if (VSHADER_SOURCE && FSHADER_SOURCE)
         start(gl);
     }
 
     function readShaderFile(gl, fileName, shader) {
       const request = new XMLHttpRequest();
-
       request.onreadystatechange = function () {
         if (request.readyState === 4 && request.status !== 404)
           onReadShader(gl, request.responseText, shader);
