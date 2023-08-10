@@ -1,0 +1,49 @@
+<html>
+
+<body>
+  <canvas id="cvs" />
+  <script src="initShaders.js"></script>
+  <script src="initVertexBuffers.js"></script>
+  <script src="writeGLData.js"></script>
+  <script src="readTexture.js"></script>
+  <script>
+    const VSHADER_SOURCE = `
+    attribute vec4 a_Position;
+    attribute vec2 a_TexCoord;
+    varying vec2 v_TexCoord;
+    void main(){
+      gl_Position = a_Position;
+      v_TexCoord = a_TexCoord;
+    }`;
+
+    const FSHADER_SOURCE = `
+    precision mediump float;
+    uniform sampler2D u_Sampler0;
+    uniform sampler2D u_Sampler1;
+    varying vec2 v_TexCoord;
+    void main(){
+      vec4 color0 = texture2D(u_Sampler0, v_TexCoord);
+      vec4 color1 = texture2D(u_Sampler1, v_TexCoord);
+      gl_FragColor = color0 * color1;
+    }`;
+
+    const gl = document.getElementById('cvs').getContext('webgl');
+    initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    const verticesTexCoords = new Float32Array([
+      -0.5, 0.5, 0.0, 1.0,
+      -0.5, -0.5, 0.0, 0.0,
+      0.5, 0.5, 1.0, 1.0,
+      0.5, -0.5, 1.0, 0.0,
+    ]);
+    const n = initVertexBuffers2(gl, verticesTexCoords, 'a_Position', 2, 'a_TexCoord', 2);
+
+    const files = ['sky.jpg', 'circle.gif'];
+    const names = ['u_Sampler0', 'u_Sampler1'];
+    initTextures(gl, n, files, names);
+  </script>
+</body>
+
+</html>

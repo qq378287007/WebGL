@@ -1,0 +1,45 @@
+<html>
+
+<body>
+  <canvas id="cvs" />
+  <script src="initShaders.js"></script>
+  <script src="writeGLData.js"></script>
+  <script src="matrix.js"></script>
+  <script src="initBuffers.js"></script>
+  <script>
+
+    const VSHADER_SOURCE = `
+    attribute vec4 a_Position;
+    attribute vec2 a_TexCoord;
+    uniform mat4 u_MvpMatrix;
+    varying vec2 v_TexCoord;
+    void main(){
+      gl_Position = u_MvpMatrix * a_Position;
+      v_TexCoord = a_TexCoord;
+    }`;
+
+    const FSHADER_SOURCE = `
+    precision mediump float;
+    uniform sampler2D u_Sampler;
+    varying vec2 v_TexCoord;
+    void main(){
+      gl_FragColor = texture2D(u_Sampler, v_TexCoord);
+    }`;
+
+    const canvas = document.getElementById('cvs');
+    const gl = canvas.getContext('webgl');
+    initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    const viewProjMatrix = new Matrix4();
+    viewProjMatrix.setPerspective(30.0, canvas.width / canvas.height, 1.0, 100.0);
+    viewProjMatrix.lookAt(3.0, 3.0, 7.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+
+    var currentAngle = [0.0, 0.0];
+
+  </script>
+</body>
+
+</html>
