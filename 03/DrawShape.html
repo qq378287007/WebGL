@@ -28,12 +28,12 @@
     const n = initVertexBuffers(gl, vertices, 'a_Position', 2);
     
     //gl.drawArrays(gl.POINTS, 0, n);
-    //gl.drawArrays(gl.TRIANGLES, 0, n);
-    //gl.drawArrays(gl.LINES, 0, n);
-    //gl.drawArrays(gl.LINE_STRIP, 0, n);
-    //gl.drawArrays(gl.TRIANGLE_FAN, 0, n);
-    //gl.drawArrays(gl.LINE_LOOP, 0, n);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, n);
+    //gl.drawArrays(gl.LINES, 0, n);//01,23
+    //gl.drawArrays(gl.LINE_STRIP, 0, n);//01,12,23
+    //gl.drawArrays(gl.LINE_LOOP, 0, n);//01,12,23,30
+    //gl.drawArrays(gl.TRIANGLES, 0, n);//012
+    //gl.drawArrays(gl.TRIANGLE_STRIP, 0, n);//012,123
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, n);//012,023
   </script>
 </body>
 

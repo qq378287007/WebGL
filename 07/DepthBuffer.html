@@ -28,8 +28,8 @@
     const gl = canvas.getContext('webgl');
     initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE);
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.enable(gl.DEPTH_TEST);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);//开启隐藏面消除功能
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);//DEPTH_BUFFER_BIT清楚深度缓冲区，帮助消除隐藏面
 
     const verticesColors = new Float32Array([
       0.0, 1.0, 0.0, 0.4, 0.4, 1.0,
