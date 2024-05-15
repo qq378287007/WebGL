@@ -1,13 +1,13 @@
 <html>
 
 <body>
-  <canvas id="cvs" />
+  <canvas id="cvs"  width="400" height="400"/>
   <script src="initShaders.js"></script>
   <script src="writeGLData.js"></script>
   <script src="matrix.js"></script>
   <script src="initBuffers.js"></script>
+  <script src="readTexture.js"></script>
   <script>
-
     const VSHADER_SOURCE = `
     attribute vec4 a_Position;
     attribute vec2 a_TexCoord;
@@ -19,7 +19,9 @@
     }`;
 
     const FSHADER_SOURCE = `
-    precision mediump float;
+    #ifdef GL_ES
+      precision mediump float;
+    #endif
     uniform sampler2D u_Sampler;
     varying vec2 v_TexCoord;
     void main(){
@@ -39,6 +41,97 @@
 
     var currentAngle = [0.0, 0.0];
 
+    function draw(gl, n) {
+      // Caliculate The model view projection matrix and pass it to u_MvpMatrix
+      const g_MvpMatrix = new Matrix4(); // Model view projection matrix
+      g_MvpMatrix.set(viewProjMatrix);
+      g_MvpMatrix.rotate(currentAngle[0], 1.0, 0.0, 0.0); // Rotation around x-axis
+      g_MvpMatrix.rotate(currentAngle[1], 0.0, 1.0, 0.0); // Rotation around y-axis
+      writeUniformMatrix4fv(gl, 'u_MvpMatrix', g_MvpMatrix.elements);
+
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);     // Clear buffers
+      gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_BYTE, 0);   // Draw the cube
+    }
+
+    // Create a cube
+    //    v6----- v5
+    //   /|      /|
+    //  v1------v0|
+    //  | |     | |
+    //  | |v7---|-|v4
+    //  |/      |/
+    //  v2------v3
+    var vertices = new Float32Array([   // Vertex coordinates
+      1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0,    // v0-v1-v2-v3 front
+      1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0,    // v0-v3-v4-v5 right
+      1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0,    // v0-v5-v6-v1 up
+      -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0,    // v1-v6-v7-v2 left
+      -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0,    // v7-v4-v3-v2 down
+      1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0     // v4-v7-v6-v5 back
+    ]);
+    initArrayBuffer(gl, vertices, 'a_Position', 3);
+
+    var texCoords = new Float32Array([   // Texture coordinates
+      1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,    // v0-v1-v2-v3 front
+      0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0,    // v0-v3-v4-v5 right
+      1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,    // v0-v5-v6-v1 up
+      1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,    // v1-v6-v7-v2 left
+      0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,    // v7-v4-v3-v2 down
+      0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0     // v4-v7-v6-v5 back
+    ]);
+    initArrayBuffer(gl, texCoords, 'a_TexCoord', 2);
+
+    // Indices of the vertices
+    var indices = new Uint8Array([
+      0, 1, 2, 0, 2, 3,    // front
+      4, 5, 6, 4, 6, 7,    // right
+      8, 9, 10, 8, 10, 11,    // up
+      12, 13, 14, 12, 14, 15,    // left
+      16, 17, 18, 16, 18, 19,    // down
+      20, 21, 22, 20, 22, 23     // back
+    ]);
+    const n = initElementBuffer(gl, indices);
+    //draw(gl, n);
+
+    var dragging = false;         // Dragging or not
+    var lastX = -1;
+    var lastY = -1;   // Last position of the mouse
+    canvas.onmousedown = function (ev) {   // Mouse is pressed
+      var x = ev.clientX;
+      var y = ev.clientY;
+      // Start dragging if a moue is in <canvas>
+      var rect = ev.target.getBoundingClientRect();
+      if (rect.left <= x && x < rect.right && rect.top <= y && y < rect.bottom) {
+        lastX = x;
+        lastY = y;
+        dragging = true;
+      }
+    };
+    canvas.onmouseup = function (ev) { dragging = false; }; // Mouse is released
+    canvas.onmousemove = function (ev) { // Mouse is moved
+      var x = ev.clientX;
+      var y = ev.clientY;
+      if (dragging) {
+        var factor = 100 / canvas.height; // The rotation ratio
+        var dx = factor * (x - lastX);
+        var dy = factor * (y - lastY);
+        // Limit x-axis rotation angle to -90 to 90 degrees
+        currentAngle[0] = Math.max(Math.min(currentAngle[0] + dy, 90.0), -90.0);
+        currentAngle[1] = currentAngle[1] + dx;
+      }
+      lastX = x;
+      lastY = y;
+    };
+
+    const files = ['sky.jpg'];
+    const names = ['u_Sampler'];
+    initTextures(gl, n, files, names);
+
+    function tick() {   // Start drawing
+      draw(gl, n);
+      requestAnimationFrame(function () { tick(); });
+    };
+    tick();
   </script>
 </body>
 

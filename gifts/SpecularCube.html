@@ -1,7 +1,7 @@
 <html>
 
 <body>
-  <canvas id="cvs"  width="400" height="400"/>
+  <canvas id="cvs" width="400" height="400" />
   <script src="initShaders.js"></script>
   <script src="writeGLData.js"></script>
   <script src="matrix.js"></script>
@@ -21,7 +21,7 @@
       mat4 modelViewMatrix = u_viewMatrix * u_modelMatrix;
       v_Position = modelViewMatrix * a_Position;
       gl_Position = u_perspectiveMatrix * v_Position;
-      v_Normal = normalize( mat3(modelViewMatrix) * a_Normal);
+      v_Normal = normalize(mat3(modelViewMatrix) * a_Normal);
     }`;
 
     const FSHADER_SOURCE = `
@@ -43,7 +43,7 @@
         vec3 reflectVec = reflect(-lightDir, normal);
         specular = pow(max(dot(reflectVec, viewVec), 0.0), 120.0);
       }
-      gl_FragColor.rgb = vec3(0.1,0.1,0.1) + vec3(0.4, 0.4, 0.4) * d + specular;
+      gl_FragColor.rgb = vec3(0.1, 0.1, 0.1) + vec3(0.4, 0.4, 0.4) * d + specular;
       gl_FragColor.a = 1.0;
     }`;
 
@@ -96,8 +96,10 @@
     ]);
     const n = initElementBuffer(gl, indices);
 
-    const g_modelMatrix = new Matrix4();
-    function drawCube(gl, angle) {
+    const STEP = 0.3;
+    var angle = 0.0;
+    function drawCube(gl) {
+      const g_modelMatrix = new Matrix4();
       g_modelMatrix.setTranslate(0, 0, 0);
       g_modelMatrix.rotate(angle, 0, 1, 0);
       g_modelMatrix.scale(1.0, 1.0, 1.0);
@@ -106,11 +108,11 @@
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_BYTE, 0);
 
-      requestAnimationFrame(function () { drawCube(gl, angle + 0.3); });
+      angle += STEP;
+      requestAnimationFrame(function () { drawCube(gl); });
     };
 
-    const angle = 0.0;
-    drawCube(gl, angle); 
+    drawCube(gl); 
   </script>
 </body>
 

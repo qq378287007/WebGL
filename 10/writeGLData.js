@@ -34,6 +34,24 @@ function writeAttribFv(gl, name, value) {
     }
 }
 
+function writeUniformI(gl, name) {
+    const uniform = gl.getUniformLocation(gl.program, name);
+    switch (arguments.length - 2) {
+        case 1:
+            gl.uniform1i(uniform, arguments[2]);
+            break;
+        case 2:
+            gl.uniform2i(uniform, arguments[2], arguments[3]);
+            break;
+        case 3:
+            gl.uniform3i(uniform, arguments[2], arguments[3], arguments[4]);
+            break;
+        case 4:
+            gl.uniform4i(uniform, arguments[2], arguments[3], arguments[4], arguments[5]);
+            break;
+    }
+}
+
 function writeUniformF(gl, name) {
     const uniform = gl.getUniformLocation(gl.program, name);
     switch (arguments.length - 2) {
@@ -73,23 +91,4 @@ function writeUniformFv(gl, name, value) {
 function writeUniformMatrix4fv(gl, name, value) {
     const uniformMatrix4 = gl.getUniformLocation(gl.program, name);
     gl.uniformMatrix4fv(uniformMatrix4, false, value);
-}
-
-
-function writeUniformI(gl, name) {
-    const uniform = gl.getUniformLocation(gl.program, name);
-    switch (arguments.length - 2) {
-        case 1:
-            gl.uniform1i(uniform, arguments[2]);
-            break;
-        case 2:
-            gl.uniform2i(uniform, arguments[2], arguments[3]);
-            break;
-        case 3:
-            gl.uniform3i(uniform, arguments[2], arguments[3], arguments[4]);
-            break;
-        case 4:
-            gl.uniform4i(uniform, arguments[2], arguments[3], arguments[4], arguments[5]);
-            break;
-    }
 }

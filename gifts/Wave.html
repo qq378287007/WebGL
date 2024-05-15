@@ -20,7 +20,7 @@
       float y = sin(dist*20.0 + u_time);
       position.y = y * 0.05;
       gl_Position = u_perspectiveMatrix * u_viewMatrix * u_modelMatrix * position;
-      float c = (y+1.0) * 0.5 * 0.8+0.2;
+      float c = (y + 1.0) * 0.5 * 0.8 + 0.2;
       v_Color = vec4(c, c, c, 1.0);
     }`;
 
@@ -81,17 +81,18 @@
     }
     const n = initElementBuffer(gl, new Uint16Array(indexData));
 
-    function draw(gl, time) {
-      writeAttribF(gl, "u_time", time);
-
+    const STEP = 0.2;
+    var time = 0.0;
+    function draw(gl) {
+      writeUniformF(gl, "u_time", time);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_SHORT, 0);
 
-      requestAnimationFrame(function () { draw(gl, time + 0.02); });
+      time += STEP;
+      requestAnimationFrame(function () { draw(gl); });
     };
 
-    const time = 0.0;
-    draw(gl, 0.0); 
+    draw(gl); 
   </script>
 </body>
 

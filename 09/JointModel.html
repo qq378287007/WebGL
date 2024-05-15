@@ -8,40 +8,6 @@
   <script src="matrix.js"></script>
   <script src="initBuffers.js"></script>
   <script>
-    const viewProjMatrix = new Matrix4();
-    const g_modelMatrix = new Matrix4();
-    const g_mvpMatrix = new Matrix4();
-    const g_normalMatrix = new Matrix4();
-    function drawBox(gl, n) {
-      g_mvpMatrix.set(viewProjMatrix);
-      g_mvpMatrix.multiply(g_modelMatrix);
-      writeUniformMatrix4fv(gl, 'u_MvpMatrix', g_mvpMatrix.elements);
-
-      g_normalMatrix.setInverseOf(g_modelMatrix);
-      g_normalMatrix.transpose();
-      writeUniformMatrix4fv(gl, 'u_NormalMatrix', g_normalMatrix.elements);
-
-      gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_BYTE, 0);
-    }
-
-    var g_joint1Angle = 0.0;
-    var g_arm1Angle = -90.0;
-    function draw(gl, n) {
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-      // Arm1
-      const arm1Length = 10.0; // Length of arm1
-      g_modelMatrix.setTranslate(0.0, -12.0, 0.0);
-      g_modelMatrix.rotate(g_arm1Angle, 0.0, 1.0, 0.0);    // Rotate around the y-axis
-      drawBox(gl, n); // Draw
-
-      // Arm2
-      g_modelMatrix.translate(0.0, arm1Length, 0.0); // Move to joint1
-      g_modelMatrix.rotate(g_joint1Angle, 0.0, 0.0, 1.0);  // Rotate around the z-axis
-      g_modelMatrix.scale(1.3, 1.0, 1.3); // Make it a little thicker
-      drawBox(gl, n); // Draw
-    }
-
     const VSHADER_SOURCE = `
     attribute vec4 a_Position;
     attribute vec4 a_Normal;
@@ -71,8 +37,42 @@
     gl.enable(gl.DEPTH_TEST);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    const viewProjMatrix = new Matrix4();
     viewProjMatrix.setPerspective(50.0, canvas.width / canvas.height, 1.0, 100.0);
     viewProjMatrix.lookAt(20.0, 10.0, 30.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+
+    const g_modelMatrix = new Matrix4();
+    function drawBox(gl, n) {
+      const g_mvpMatrix = new Matrix4();
+      g_mvpMatrix.set(viewProjMatrix);
+      g_mvpMatrix.multiply(g_modelMatrix);
+      writeUniformMatrix4fv(gl, 'u_MvpMatrix', g_mvpMatrix.elements);
+
+      const g_normalMatrix = new Matrix4();
+      g_normalMatrix.setInverseOf(g_modelMatrix);
+      g_normalMatrix.transpose();
+      writeUniformMatrix4fv(gl, 'u_NormalMatrix', g_normalMatrix.elements);
+
+      gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_BYTE, 0);
+    }
+
+    var g_joint1Angle = 0.0;
+    var g_arm1Angle = -90.0;
+    function draw(gl, n) {
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      // Arm1
+      const arm1Length = 10.0; // Length of arm1
+      g_modelMatrix.setTranslate(0.0, -12.0, 0.0);
+      g_modelMatrix.rotate(g_arm1Angle, 0.0, 1.0, 0.0);    // Rotate around the y-axis
+      drawBox(gl, n); // Draw
+
+      // Arm2
+      g_modelMatrix.translate(0.0, arm1Length, 0.0); // Move to joint1
+      g_modelMatrix.rotate(g_joint1Angle, 0.0, 0.0, 1.0);  // Rotate around the z-axis
+      g_modelMatrix.scale(1.3, 1.0, 1.3); // Make it a little thicker
+      drawBox(gl, n); // Draw
+    }
 
     const vertices = new Float32Array([
       1.5, 10.0, 1.5, -1.5, 10.0, 1.5, -1.5, 0.0, 1.5, 1.5, 0.0, 1.5, // v0-v1-v2-v3 front
@@ -117,10 +117,12 @@
             g_joint1Angle -= ANGLE_STEP;
           break;
         case 39:
-          g_arm1Angle = (g_arm1Angle + ANGLE_STEP) % 360;
+          //g_arm1Angle = (g_arm1Angle + ANGLE_STEP) % 360;
+          g_arm1Angle += ANGLE_STEP;
           break;
         case 37:
-          g_arm1Angle = (g_arm1Angle - ANGLE_STEP) % 360;
+          //g_arm1Angle = (g_arm1Angle - ANGLE_STEP) % 360;
+          g_arm1Angle -= ANGLE_STEP;
           break;
         default:
           return;

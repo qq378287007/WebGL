@@ -9,25 +9,57 @@
   <script src="matrix.js"></script>
   <script src="initBuffers.js"></script>
   <script>
+    const VSHADER_SOURCE = `
+      attribute vec4 a_Position;
+      attribute vec4 a_Normal;
+      uniform mat4 u_MvpMatrix;
+      uniform mat4 u_NormalMatrix;
+      varying vec4 v_Color;
+      void main(){
+        gl_Position = u_MvpMatrix * a_Position;
+        vec3 lightDirection = normalize(vec3(0.0, 0.5, 0.7));
+        vec4 color = vec4(1.0, 0.4, 0.0, 1.0);
+        vec3 normal = normalize((u_NormalMatrix * a_Normal).xyz);
+        float nDotL = max(dot(normal, lightDirection), 0.0);
+        v_Color = vec4(color.rgb * nDotL + vec3(0.1), color.a);
+      }`;
+
+    const FSHADER_SOURCE = `
+      precision mediump float;
+      varying vec4 v_Color;
+      void main(){
+        gl_FragColor = v_Color;
+      }`;
+
+    const canvas = document.getElementById('cvs');
+    const gl = canvas.getContext('webgl');
+    initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
     const g_matrixStack = [];
     function pushMatrix(m) {
       const m2 = new Matrix4(m);
       g_matrixStack.push(m2);
     }
-
     function popMatrix() {
       return g_matrixStack.pop();
     }
 
     const viewProjMatrix = new Matrix4();
+    viewProjMatrix.setPerspective(50.0, canvas.width / canvas.height, 1.0, 100.0);
+    viewProjMatrix.lookAt(20.0, 10.0, 30.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+
     var g_modelMatrix = new Matrix4();
-    const g_mvpMatrix = new Matrix4();
-    const g_normalMatrix = new Matrix4();
+    
     function drawSegment(gl, n) {
+      const g_mvpMatrix = new Matrix4();
       g_mvpMatrix.set(viewProjMatrix);
       g_mvpMatrix.multiply(g_modelMatrix);
       writeUniformMatrix4fv(gl, 'u_MvpMatrix', g_mvpMatrix.elements);
 
+      const g_normalMatrix = new Matrix4();
       g_normalMatrix.setInverseOf(g_modelMatrix);
       g_normalMatrix.transpose();
       writeUniformMatrix4fv(gl, 'u_NormalMatrix', g_normalMatrix.elements);
@@ -113,10 +145,12 @@
       g_modelMatrix.translate(0.0, palmLength, 0.0);
 
       pushMatrix(g_modelMatrix);
+      
       g_modelMatrix.translate(0.0, 0.0, 2.0);
       g_modelMatrix.rotate(g_joint3Angle, 1.0, 0.0, 0.0);
       initArrayBuffer(gl, vertices_finger, 'a_Position', 3);
       drawSegment(gl, n);
+
       g_modelMatrix = popMatrix();
 
       g_modelMatrix.translate(0.0, 0.0, -2.0);
@@ -124,38 +158,6 @@
       initArrayBuffer(gl, vertices_finger, 'a_Position', 3);
       drawSegment(gl, n);
     }
-
-    const VSHADER_SOURCE = `
-      attribute vec4 a_Position;
-      attribute vec4 a_Normal;
-      uniform mat4 u_MvpMatrix;
-      uniform mat4 u_NormalMatrix;
-      varying vec4 v_Color;
-      void main(){
-        gl_Position = u_MvpMatrix * a_Position;
-        vec3 lightDirection = normalize(vec3(0.0, 0.5, 0.7));
-        vec4 color = vec4(1.0, 0.4, 0.0, 1.0);
-        vec3 normal = normalize((u_NormalMatrix * a_Normal).xyz);
-        float nDotL = max(dot(normal, lightDirection), 0.0);
-        v_Color = vec4(color.rgb * nDotL + vec3(0.1), color.a);
-      }`;
-
-    const FSHADER_SOURCE = `
-      precision mediump float;
-      varying vec4 v_Color;
-      void main(){
-        gl_FragColor = v_Color;
-      }`;
-
-    const canvas = document.getElementById('cvs');
-    const gl = canvas.getContext('webgl');
-    initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE);
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.enable(gl.DEPTH_TEST);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    viewProjMatrix.setPerspective(50.0, canvas.width / canvas.height, 1.0, 100.0);
-    viewProjMatrix.lookAt(20.0, 10.0, 30.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
     const normals = new Float32Array([
       0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, // v0-v1-v2-v3 front
@@ -190,16 +192,16 @@
             g_joint1Angle -= ANGLE_STEP;
           break;
         case 39:
-          g_arm1Angle = (g_arm1Angle + ANGLE_STEP) % 360;
+          g_arm1Angle += ANGLE_STEP;
           break;
         case 37:
-          g_arm1Angle = (g_arm1Angle - ANGLE_STEP) % 360;
+          g_arm1Angle -= ANGLE_STEP;
           break;
         case 90:
-          g_joint2Angle = (g_joint2Angle + ANGLE_STEP) % 360;
+          g_joint2Angle += ANGLE_STEP;
           break;
         case 88:
-          g_joint2Angle = (g_joint2Angle - ANGLE_STEP) % 360;
+          g_joint2Angle -= ANGLE_STEP;
           break;
         case 86:
           if (g_joint3Angle + ANGLE_STEP <= 60.0)
@@ -209,7 +211,8 @@
           if (g_joint3Angle - ANGLE_STEP >= -60.0)
             g_joint3Angle -= ANGLE_STEP;
           break;
-        default: return;
+        default: 
+          return;
       }
       draw(gl, n);
     };

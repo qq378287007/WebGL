@@ -35,8 +35,8 @@ function initArrayBuffer2(gl, verticesColors, name1, num1, name2, num2) {
 }
 
 function initElementBuffer(gl, data) {
-    const indexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data, gl.STATIC_DRAW);
 
     return data.length;
