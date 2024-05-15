@@ -12,6 +12,20 @@ function initArrayBuffer(gl, data, name, num) {
     return data.length / num;
 }
 
+function initArrayBufferType(gl, data, name, num, type) {
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+
+    const attribute = gl.getAttribLocation(gl.program, name);
+    gl.vertexAttribPointer(attribute, num, type, false, 0, 0);
+    gl.enableVertexAttribArray(attribute);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+    return data.length / num;
+}
+
 function initArrayBuffer2(gl, verticesColors, name1, num1, name2, num2) {
     const FSIZE = verticesColors.BYTES_PER_ELEMENT;
 

@@ -1,18 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Round Point</title>
-  </head>
 
-  <body onload="main()">
-    <canvas id="webgl" width="400" height="400">
+<head>
+  <meta charset="utf-8" />
+  <title>Round Point</title>
+</head>
+
+<body>
+  <canvas id="cvs" width="400" height="400">
     Please use a browser that supports "canvas"
-    </canvas>
+  </canvas>
+  <script src="initShaders.js"></script>
+  <script src="writeGLData.js"></script>
+  <script src="matrix.js"></script>
+  <script src="initBuffers.js"></script>
+  <script>
+    const VSHADER_SOURCE = `
+      attribute vec4 a_Position;
+      void main(){
+        gl_Position =  a_Position;
+        gl_PointSize = 10.0;
+      }`;
 
-    <script src="../lib/webgl-utils.js"></script>
-    <script src="../lib/webgl-debug.js"></script>
-    <script src="../lib/cuon-utils.js"></script>
-    <script src="RoundedPoints.js"></script>
-  </body>
+    const FSHADER_SOURCE = `
+      precision mediump float;
+      void main(){
+        float d = distance(gl_PointCoord, vec2(0.5, 0.5));
+        if(d < 0.5)
+          gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        else
+          discard;
+      }`;
+
+    const canvas = document.getElementById('cvs');
+    const gl = canvas.getContext('webgl');
+    initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+
+    const vertices = new Float32Array([
+      0, 0.5, -0.5, -0.5, 0.5, -0.5
+    ]);
+    const n = initArrayBuffer(gl, vertices, 'a_Position', 2);
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.POINTS, 0, n);
+  </script>
+</body>
+
 </html>
