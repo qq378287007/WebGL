@@ -1,19 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Continue to rotate the triangle (context lost event correspondence)</title>
-  </head>
 
-  <body onload="main()">
-    <canvas id="webgl" width="400" height="400">
+<head>
+  <meta charset="utf-8" />
+  <title>Continue to rotate the triangle (context lost event correspondence)</title>
+</head>
+
+<body>
+  <canvas id="cvs" width="400" height="400">
     Please use a browser that supports "canvas"
-    </canvas>
+  </canvas>
 
-    <script src="../lib/webgl-utils.js"></script>
-    <script src="../lib/webgl-debug.js"></script>
-    <script src="../lib/cuon-utils.js"></script>
-    <script src="../lib/cuon-matrix.js"></script>
-    <script src="RotatingTriangle_contextLost.js"></script>
-  </body>
+  <script src="initShaders.js"></script>
+  <script src="writeGLData.js"></script>
+  <script src="matrix.js"></script>
+  <script src="initBuffers.js"></script>
+  <script>
+    const VSHADER_SOURCE = `
+    attribute vec4 a_Position;
+    uniform mat4 u_ModelMatrix;
+    void main() {
+      gl_Position =  u_ModelMatrix * a_Position;
+    }`;
+    const FSHADER_SOURCE = `
+    #ifdef GL_ES
+      precision mediump float;
+    #endif
+    void main() {
+      gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    }`;
+
+    // Current rotation angle
+    const ANGLE_STEP = 45.0;
+    // Last time that this function was called
+    var g_last = Date.now();
+    function animate(angle) {
+      // Calculate the elapsed time
+      var now = Date.now();
+      var elapsed = now - g_last;
+      g_last = now;
+      // Update the current rotation angle (adjusted by the elapsed time)
+      var newAngle = angle + (ANGLE_STEP * elapsed) / 1000.0;
+      return newAngle;
+    }
+
+    function draw(gl, n, currentAngle) {
+      // Create a model matrix
+      const modelMatrix = new Matrix4();
+      // Set the rotation matrix
+      modelMatrix.setRotate(currentAngle, 0, 0, 1);
+      // Pass the rotation matrix to the vertex shader
+      writeUniformMatrix4fv(gl, 'u_ModelMatrix', modelMatrix.elements);
+
+      // Clear <canvas>
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      // Draw the rectangle
+      gl.drawArrays(gl.TRIANGLES, 0, n);
+    }
+
+    var g_requestID; // The return value of requestAnimationFrame()
+    // Current rotation angle
+    var g_currentAngle = 0.0; // Changed from local variable to global variable
+    function start(canvas) {
+      const gl = canvas.getContext('webgl');
+      initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE);
+      gl.enable(gl.DEPTH_TEST);
+      gl.clearColor(0.0, 0.0, 0.0, 1.0);   // Specify the color for clearing <canvas>
+
+      const vertices = new Float32Array([
+        0.0, 0.5, -0.5, -0.5, 0.5, -0.5
+      ]);
+      const n = 3;   // The number of vertices
+      initArrayBuffer(gl, vertices, 'a_Position', 3);
+
+      function tick() {    // Start drawing
+        g_currentAngle = animate(g_currentAngle);                // Update current rotation angle
+        draw(gl, n, g_currentAngle); // Draw the triangle
+        g_requestID = requestAnimationFrame(tick, canvas);       // Reregister this Function again
+      };
+      tick();
+    }
+
+    function contextLost(ev) { // Event Handler for context lost event
+      cancelAnimationFrame(g_requestID); //  Stop animation
+      ev.preventDefault();  // Prevent the default behavior
+    }
+
+    const canvas = document.getElementById('cvs');
+    canvas.addEventListener('webglcontextlost', contextLost, false);
+    canvas.addEventListener('webglcontextrestored', function (ev) { start(canvas); }, false);
+    start(canvas);   // Perform WebGL related processes
+  </script>
+</body>
+
 </html>

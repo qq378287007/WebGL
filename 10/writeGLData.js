@@ -92,3 +92,26 @@ function writeUniformMatrix4fv(gl, name, value) {
     const uniformMatrix4 = gl.getUniformLocation(gl.program, name);
     gl.uniformMatrix4fv(uniformMatrix4, false, value);
 }
+
+function writeProgramUniformI(gl, program, name) {
+    const uniform = gl.getUniformLocation(program, name);
+    switch (arguments.length - 2) {
+        case 1:
+            gl.uniform1i(uniform, arguments[2]);
+            break;
+        case 2:
+            gl.uniform2i(uniform, arguments[2], arguments[3]);
+            break;
+        case 3:
+            gl.uniform3i(uniform, arguments[2], arguments[3], arguments[4]);
+            break;
+        case 4:
+            gl.uniform4i(uniform, arguments[2], arguments[3], arguments[4], arguments[5]);
+            break;
+    }
+}
+
+function writeProgramUniformMatrix4fv(gl, program, name, value) {
+    const uniformMatrix4 = gl.getUniformLocation(program, name);
+    gl.uniformMatrix4fv(uniformMatrix4, false, value);
+}

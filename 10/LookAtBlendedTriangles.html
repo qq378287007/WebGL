@@ -1,19 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Alpha blending</title>
-  </head>
 
-  <body onload="main()">
-    <canvas id="webgl" width="400" height="400">
-      Please use a browser that supports "canvas"
-    </canvas>
+<head>
+  <meta charset="utf-8" />
+  <title>Alpha blending</title>
+</head>
 
-    <script src="../lib/webgl-utils.js"></script>
-    <script src="../lib/webgl-debug.js"></script>
-    <script src="../lib/cuon-utils.js"></script>
-    <script src="../lib/cuon-matrix.js"></script>
-    <script src="LookAtBlendedTriangles.js"></script>
-  </body>
+<body>
+  <canvas id="cvs" width="400" height="400">
+    Please use a browser that supports "canvas"
+  </canvas>
+  <script src="initShaders.js"></script>
+  <script src="writeGLData.js"></script>
+  <script src="matrix.js"></script>
+  <script src="initBuffers.js"></script>
+  <script>
+    const VSHADER_SOURCE = `
+    attribute vec4 a_Position;
+    attribute vec4 a_Color;
+    uniform mat4 u_ViewMatrix;
+    uniform mat4 u_ProjMatrix;
+    varying vec4 v_Color;
+    void main(){
+      gl_Position = u_ProjMatrix * u_ViewMatrix * a_Position;
+      v_Color = a_Color;
+    }`;
+
+    const FSHADER_SOURCE = `
+    precision mediump float;
+    varying vec4 v_Color;
+    void main(){
+      gl_FragColor = v_Color;
+    }`;
+
+    const gl = document.getElementById('cvs').getContext('webgl');
+    initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    // Enable alpha blending
+    gl.enable(gl.BLEND);
+    // Set blending function
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    //gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    const viewMatrix = new Matrix4();
+    var g_EyeX = 0.20;
+    var g_EyeY = 0.25;
+    var g_EyeZ = 0.25;
+    function draw(gl, n) {
+      viewMatrix.setLookAt(g_EyeX, g_EyeY, g_EyeZ, 0, 0, 0, 0, 1, 0);
+      writeUniformMatrix4fv(gl, 'u_ViewMatrix', viewMatrix.elements);
+
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.drawArrays(gl.TRIANGLES, 0, n);
+    }
+
+    const projMatrix = new Matrix4();
+    projMatrix.setOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 2.0);
+    writeUniformMatrix4fv(gl, 'u_ProjMatrix', projMatrix.elements);
+
+    const verticesColors = new Float32Array([
+      // Vertex coordinates and color(RGBA)
+      0.0, 0.5, -0.4, 0.4, 1.0, 0.4, 0.4, // The back green one
+      -0.5, -0.5, -0.4, 0.4, 1.0, 0.4, 0.4,
+      0.5, -0.5, -0.4, 1.0, 0.4, 0.4, 0.4,
+
+      0.5, 0.4, -0.2, 1.0, 0.4, 0.4, 0.4, // The middle yerrow one
+      -0.5, 0.4, -0.2, 1.0, 1.0, 0.4, 0.4,
+      0.0, -0.6, -0.2, 1.0, 1.0, 0.4, 0.4,
+
+      0.0, 0.5, 0.0, 0.4, 0.4, 1.0, 0.4,  // The front blue one 
+      -0.5, -0.5, 0.0, 0.4, 0.4, 1.0, 0.4,
+      0.5, -0.5, 0.0, 1.0, 0.4, 0.4, 0.4,
+    ]);
+    const n = initArrayBuffer2(gl, verticesColors, 'a_Position', 3, 'a_Color', 4);
+    draw(gl, n);
+
+    //window
+    document.onkeydown = function (ev) {
+      if (ev.keyCode == 39)
+        g_EyeX += 0.01;
+      else if (ev.keyCode == 37)
+        g_EyeX -= 0.01;
+      else
+        return;
+      draw(gl, n);
+    };
+  </script>
+</body>
+
 </html>

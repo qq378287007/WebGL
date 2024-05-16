@@ -55,3 +55,17 @@ function initElementBuffer(gl, data) {
 
     return data.length;
 }
+
+function initProgramArrayBuffer(gl, program, data, name, num) {
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+
+    const attribute = gl.getAttribLocation(program, name);
+    gl.vertexAttribPointer(attribute, num, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(attribute);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+    return data.length / num;
+}
