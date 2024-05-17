@@ -1,11 +1,13 @@
 function initArrayBuffer(gl, data, name, num) {
+    const attribute = gl.getAttribLocation(gl.program, name);
+
     const buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
 
-    const attribute = gl.getAttribLocation(gl.program, name);
     gl.vertexAttribPointer(attribute, num, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(attribute);
+
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
