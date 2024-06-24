@@ -7,7 +7,7 @@
 </head>
 
 <body>
-  <canvas id="cvs" width="400" height="400">
+  <canvas id="cvs" width="800" height="600">
     Please use a browser that supports "canvas"
   </canvas>
   <script src="initShaders.js"></script>
@@ -48,8 +48,12 @@
     gl.enable(gl.DEPTH_TEST);
 
     // Start reading the OBJ file
-    readOBJFile('cube.obj', gl, 40, true);
+    //readOBJFile('cube.obj', gl, 40, true);
     //readOBJFile('house_obj.obj', gl, 60, true);
+    readOBJFile('teamugobj.obj', gl, 60, true);
+    //readOBJFile('medieval house.obj', gl, 15, true);
+    //readOBJFile('farmhouse_obj.obj', gl, 5, true);
+    //readOBJFile('Old House 2 3D Models.obj', gl, 5, true);
 
     const ANGLE_STEP = 30;   // The increments of rotation angle (degrees)
     var last = Date.now(); // Last time that this function was called
